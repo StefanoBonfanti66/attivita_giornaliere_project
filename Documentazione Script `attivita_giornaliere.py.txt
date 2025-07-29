@@ -1,0 +1,71 @@
+Obiettivo Generale
+
+
+  Lo script automatizza l'estrazione di un report giornaliero dal software ProdWare e lo rielabora per
+  produrre un file Excel formattato e suddiviso in base a criteri specifici. L'obiettivo finale è creare
+  report chiari e distinti per ogni operatrice, separando le attività di "Contatto Cliente" da tutte le
+  altre "Azioni Commerciali".
+
+  Funzionamento Dettagliato
+
+  Il processo si svolge in due fasi principali:
+
+
+  Fase 1: Automazione ed Estrazione Dati
+   1. Lo script avvia l'applicazione prodware.exe.
+   2. Tramite pyautogui, simula una sequenza di click e interazioni per navigare nei menu del programma.
+   3. Esporta i dati grezzi in un file Excel. Il nome del file include la data di esecuzione (es.
+      OpzioniEsportazione_2025_07_15.xlsx).
+   4. Durante questo processo, una funzione gestisce eventuali popup cliccando automaticamente "OK".
+
+
+  Fase 2: Elaborazione e Creazione del Report
+   1. Lo script chiede all'utente di specificare per quale data analizzare i dati (è possibile inserire 'oggi'
+      o una data specifica).
+   2. Legge il file Excel appena esportato.
+   3. Filtro per Data: Mantiene solo le righe la cui data di inserimento corrisponde a quella scelta.
+   4. Pulizia: Rimuove un elenco predefinito di colonne non necessarie per il report finale.
+   5. Categorizzazione Principale (per Inseritore):
+       * I dati vengono raggruppati in base alla colonna `Inseritore`.
+       * I codici degli inseritori (es. ab001) vengono sostituiti con i nomi completi (es. Alessandra) secondo
+         una mappatura interna.
+   6. Sotto-Categorizzazione (per Tipo di Attività):
+       * Per ogni gruppo di attività di un inseritore, lo script analizza il contenuto della colonna `Oggetto e
+         descrizione`.
+       * Crea due categorie:
+           * `Contatto Cliente`: Se il testo nel campo contiene la frase "contatto cliente".
+           * `Azione Commerciale`: In tutti gli altri casi.
+   7. Creazione Fogli Excel:
+       * Lo script crea un nuovo foglio di lavoro all'interno dello stesso file Excel per ogni combinazione di
+         inseritore e categoria.
+       * I nomi dei fogli seguiranno il formato NomeInseritore_Categoria (es. Alessandra_Contatto Cliente,
+         Alessandra_Azione Commerciale).
+   8. Formattazione: Ogni foglio viene formattato professionalmente per la stampa e la leggibilità, impostando:
+       * Orientamento e dimensioni della pagina.
+       * Larghezza delle colonne adattiva.
+       * Stili per intestazioni e celle (bordi, grassetto, sfondi).
+       * Un titolo principale con il nome dell'inseritore e della categoria.
+
+
+  Modifiche Principali Apportate
+
+
+   1. Criterio di Analisi: Il raggruppamento principale dei dati è stato spostato dalla colonna Titolare alla
+      colonna `Inseritore`.
+   2. Introduzione Sotto-categorie: È stata aggiunta una logica per suddividere ulteriormente i report in base
+      al tipo di attività.
+   3. Campo di Analisi per Attività: Il campo di riferimento per la sotto-categorizzazione è stato impostato su
+       `Oggetto e descrizione`.
+   4. Logica di Classificazione Semplificata: La logica è stata affinata per creare solo due categorie distinte
+       (Contatto Cliente e Azione Commerciale), garantendo una separazione netta delle attività.
+
+  Configurazione Chiave
+
+
+  Le principali impostazioni si trovano nella sezione "Definizione Costanti" all'inizio del file e possono
+  essere modificate facilmente:
+   * ANALYSIS_COLUMN_NAME: Impostata su "Inseritore". È la colonna usata per il raggruppamento principale.
+   * SUBJECT_COLUMN_NAME: Impostata su "Oggetto e descrizione". È la colonna usata per la
+     sotto-categorizzazione.
+   * inseritore_replacements: Il dizionario che mappa i codici degli inseritori ai loro nomi.
+   * COLUMNS_TO_DROP_BY_NAME: La lista delle colonne da rimuovere dal report finale.
