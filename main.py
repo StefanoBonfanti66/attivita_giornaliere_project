@@ -1,33 +1,65 @@
-
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, APIRouter
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import pandas as pd
+import aggregator
+import os
+
+# --- Configurazione CORS ---
+# Definiamo le origini (i siti web) che possono fare richieste al nostro server.
+# È una misura di sicurezza fondamentale.
+origins = [
+    "https://stefanobonfanti66.github.io", # Il tuo frontend su GitHub Pages
+    "http://localhost",
+    "http://localhost:8000",
+    "http://127.0.0.1",
+    "http://127.0.0.1:8000",
+]
+# --- Fine Configurazione ---
 
 app = FastAPI()
 
-# Monta la directory corrente come directory per i file statici
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
+# Aggiungiamo il middleware CORS all'applicazione.
+# Questo permette al frontend su GitHub di comunicare con il backend sulla VPS.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Le route specifiche per i file principali (index.html, manifest.json, service-worker.js)
-# non sono più strettamente necessarie se html=True è impostato su StaticFiles,
-# ma le mantengo per chiarezza o per override specifici.
+# Eseguiamo l'aggregazione dei dati all'avvio del server.
+aggregator.aggregate_data()
 
-@app.get("/")
-def read_root():
-    return FileResponse('index.html')
+# Creiamo un router per separare le logiche dell'API.
+api_router = APIRouter()
 
-@app.get("/api/data")
+@api_router.get("/data")
 def get_data():
-    df = pd.read_csv("aggregated_data.csv")
-    # Replace NaN with empty strings for JSON compatibility
-    df = df.fillna('')
-    return df.to_dict(orient="records")
+    try:
+        # Usiamo un percorso assoluto per il file CSV per evitare problemi sulla VPS.
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, "aggregated_data.csv")
+        
+        df = pd.read_csv(csv_path)
+        if df.empty:
+            return []
+        df = df.fillna('')
+        return df.to_dict(orient="records")
+    except FileNotFoundError:
+        return []
 
-@app.get("/manifest.json")
-def get_manifest():
-    return FileResponse('manifest.json')
+# Includiamo le rotte dell'API nell'app principale, con il prefisso /api.
+app.include_router(api_router, prefix="/api")
 
-@app.get("/service-worker.js")
-def get_sw():
-    return FileResponse('service-worker.js')
+# Montiamo i file statici per ultimo.
+# Questo risolve il conflitto che causava l'errore 404.
+static_files_path = os.path.dirname(os.path.abspath(__file__))
+app.mount("/", StaticFiles(directory=static_files_path, html=True), name="static")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    # Usiamo la porta 8000 come da configurazione finale.
+    uvicorn.run(app, host="0.0.0.0", port=8000)

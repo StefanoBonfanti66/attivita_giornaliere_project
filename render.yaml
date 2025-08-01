@@ -1,0 +1,9 @@
+
+services:
+  - type: web
+    name: attivita-giornaliere-backend
+    env: python
+    plan: free # Specifica che vogliamo usare il piano gratuito di Render
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app"
+    healthCheckPath: "/api/data" # Render userà questo percorso per controllare che l'app sia attiva
