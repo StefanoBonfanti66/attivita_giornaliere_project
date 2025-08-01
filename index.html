@@ -92,27 +92,16 @@
             navigator.serviceWorker.register('/service-worker.js');
         }
 
-        // -Configurazione dell'indirizzo del Server -
-        // Per lo sviluppo in locale, usiamo un percorso relativo.
-        // Quando il backend sarà sulla VPS, qui andrà l'indirizzo IP della VPS.
-        // Esempio: const API_BASE_URL = "http://123.45.67.89:8000";
-        const API_BASE_URL = "https://attivita-giornaliere-project.onrender.com";
-        // --- Fine Configurazione ---
-
-        let allData = [];
-        const DATE_COLUMN = 'Dt. ins.';
-
         async function fetchData() {
             try {
-                // Usiamo la variabile di configurazione per costruire l'URL completo.
-                const response = await fetch(`${API_BASE_URL}/api/data`);
+                const response = await fetch('/api/data');
                 allData = await response.json();
                 populateOperatorFilter();
                 displayData(allData);
             } catch (error) {
                 console.error("Errore nel recupero dei dati:", error);
                 const tbody = document.querySelector('#data-table tbody');
-                tbody.innerHTML = '<tr><td colspan="100%" class="text-center text-danger">Impossibile caricare i dati. Verificare che il server sia in esecuzione e che l'indirizzo API sia corretto.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="100%" class="text-center text-danger">Impossibile caricare i dati. Verificare che il server sia in esecuzione.</td></tr>';
             }
         }
 
