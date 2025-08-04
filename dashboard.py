@@ -51,6 +51,10 @@ if not df.empty:
     df['Inseritore'] = df['Report_Sheet'].apply(lambda x: x.split('_')[0] if '_' in x else 'Sconosciuto')
     df['Categoria'] = df['Report_Sheet'].apply(lambda x: x.split('_')[1] if '_' in x else 'Sconosciuto')
 
+    # Convert 'dt.ins.' to datetime
+    if 'dt.ins.' in df.columns:
+        df['dt.ins.'] = pd.to_datetime(df['dt.ins.'], errors='coerce')
+
     # --- Key Metrics ---
     st.header("Riepilogo Generale")
     total_activities = len(df)
@@ -58,13 +62,26 @@ if not df.empty:
 
     # --- Filters ---
     st.sidebar.header("Filtri")
+
+    # Date Range Selector
+    st.sidebar.subheader("Filtro per Data")
+    min_date = df['dt.ins.'].min().date() if not df.empty and 'dt.ins.' in df.columns and not pd.isna(df['dt.ins.'].min()) else datetime.date.today()
+    max_date = df['dt.ins.'].max().date() if not df.empty and 'dt.ins.' in df.columns and not pd.isna(df['dt.ins.'].max()) else datetime.date.today()
+
+    start_date = st.sidebar.date_input("Data di Inizio", min_value=min_date, max_value=max_date, value=min_date)
+    end_date = st.sidebar.date_input("Data di Fine", min_value=min_date, max_value=max_date, value=max_date)
+
+    # Filter by date range
+    df_filtered_by_date = df[(df['dt.ins.'].dt.date >= start_date) & (df['dt.ins.'].dt.date <= end_date)] if 'dt.ins.' in df.columns else df
+
+
     selected_inseritore = st.sidebar.multiselect(
         "Seleziona Inseritore:",
-        options=df['Inseritore'].unique(),
-        default=df['Inseritore'].unique()
+        options=df_filtered_by_date['Inseritore'].unique(),
+        default=df_filtered_by_date['Inseritore'].unique()
     )
 
-    df_filtered = df[df['Inseritore'].isin(selected_inseritore)]
+    df_filtered = df_filtered_by_date[df_filtered_by_date['Inseritore'].isin(selected_inseritore)]
 
     if df_filtered.empty:
         st.warning("Nessun dato disponibile per i filtri selezionati.")
