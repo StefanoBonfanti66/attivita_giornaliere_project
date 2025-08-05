@@ -46,55 +46,49 @@ if uploaded_file is not None:
 if not df.empty:
     st.success(f"Dati caricati con successo dal file: {uploaded_file.name}")
 
-    # --- Data Processing for Dashboard ---
+    # --- Data Processing and Validation ---
     df['Inseritore'] = df['Report_Sheet'].apply(lambda x: x.split('_')[0] if '_' in x else 'Sconosciuto')
     df['Categoria'] = df['Report_Sheet'].apply(lambda x: x.split('_')[1] if '_' in x else 'Sconosciuto')
 
-    # Convert 'dt.ins.' to datetime, trying Italian format first.
-    if 'dt.ins.' in df.columns:
-        df['dt.ins.'] = pd.to_datetime(df['dt.ins.'], dayfirst=True, errors='coerce')
-        # Drop rows where date conversion resulted in NaT (Not a Time)
-        df.dropna(subset=['dt.ins.'], inplace=True)
+    # Check for the date column before proceeding
+    if 'dt.ins.' not in df.columns:
+        st.error("Errore critico: La colonna 'dt.ins.' non è stata trovata nel file Excel.")
+        st.stop() # Stop execution if the date column is missing
 
-    # --- Sidebar Filters ---
-    st.sidebar.header("Filtri")
+    # Convert date column with robust error handling
+    df['dt.ins.'] = pd.to_datetime(df['dt.ins.'], dayfirst=True, errors='coerce')
+    df.dropna(subset=['dt.ins.'], inplace=True)
 
-    # Inseritore Filter
-    all_inseritori = sorted(df['Inseritore'].unique())
-    selected_inseritori = st.sidebar.multiselect(
-        "Seleziona Inseritore:",
-        options=all_inseritori,
-        default=all_inseritori
-    )
+    # --- Sidebar Filters with Apply Button ---
+    with st.sidebar.form(key='filter_form'):
+        st.header("Filtri")
 
-    # Date Range Filter
-    st.sidebar.subheader("Filtro per Data")
-    
-    # Check if date filtering is possible
-    date_filter_possible = 'dt.ins.' in df.columns and not df['dt.ins.'].isnull().all()
+        # Inseritore Filter
+        all_inseritori = sorted(df['Inseritore'].unique())
+        selected_inseritori = st.multiselect(
+            "Seleziona Inseritore:",
+            options=all_inseritori,
+            default=all_inseritori
+        )
 
-    if date_filter_possible:
+        # Date Range Filter
+        st.subheader("Filtro per Data")
         min_date = df['dt.ins.'].min().date()
         max_date = df['dt.ins.'].max().date()
         
-        start_date = st.sidebar.date_input("Data di Inizio", value=min_date, min_value=min_date, max_value=max_date)
-        end_date = st.sidebar.date_input("Data di Fine", value=max_date, min_value=start_date, max_value=max_date)
-    else:
-        st.sidebar.warning("Colonna 'dt.ins.' non trovata o in formato non valido.")
-        start_date = None
-        end_date = None
+        start_date = st.date_input("Data di Inizio", value=min_date, min_value=min_date, max_value=max_date)
+        end_date = st.date_input("Data di Fine", value=max_date, min_value=start_date, max_value=max_date)
 
-    # --- Apply Filters Sequentially ---
-    # 1. Filter by Inseritore
-    df_filtered = df[df['Inseritore'].isin(selected_inseritori)]
+        # Apply Filters Button
+        apply_button = st.form_submit_button(label="Applica Filtri")
 
-    # 2. Filter by Date Range
-    if date_filter_possible and start_date and end_date:
-        # Compare the date part of the 'dt.ins.' column with the selected dates
-        df_filtered = df_filtered[
-            (df_filtered['dt.ins.'].dt.date >= start_date) &
-            (df_filtered['dt.ins.'].dt.date <= end_date)
-        ]
+    # --- Apply Filters ---
+    # The filtering logic is now triggered only by the button press
+    df_filtered = df[
+        (df['Inseritore'].isin(selected_inseritori)) &
+        (df['dt.ins.'].dt.date >= start_date) &
+        (df['dt.ins.'].dt.date <= end_date)
+    ]
 
     # --- Key Metrics ---
     st.header("Riepilogo Generale")
