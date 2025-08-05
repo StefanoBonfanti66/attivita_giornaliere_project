@@ -79,14 +79,8 @@ if not df.empty:
         
         start_date = st.sidebar.date_input("Data di Inizio", value=min_date, min_value=min_date, max_value=max_date)
         end_date = st.sidebar.date_input("Data di Fine", value=max_date, min_value=start_date, max_value=max_date)
-        
-        # --- Diagnostic Tool ---
-        st.sidebar.subheader("Diagnostica Formato Data")
-        st.sidebar.write("Prime 5 date lette dal file:")
-        st.sidebar.dataframe(df[['dt.ins.']].head())
-
     else:
-        st.sidebar.warning("Colonna 'dt.ins.' non trovata, vuota o in formato non valido.")
+        st.sidebar.warning("Colonna 'dt.ins.' non trovata o in formato non valido.")
         start_date = None
         end_date = None
 
@@ -96,15 +90,10 @@ if not df.empty:
 
     # 2. Filter by Date Range
     if date_filter_possible and start_date and end_date:
-        # Convert dates to datetime objects to ensure correct comparison
-        start_datetime = pd.to_datetime(start_date)
-        # Add one day to the end date to include all activities on that day
-        end_datetime = pd.to_datetime(end_date) + pd.Timedelta(days=1)
-        
-        # Apply the date filter
+        # Compare the date part of the 'dt.ins.' column with the selected dates
         df_filtered = df_filtered[
-            (df_filtered['dt.ins.'] >= start_datetime) & 
-            (df_filtered['dt.ins.'] < end_datetime)
+            (df_filtered['dt.ins.'].dt.date >= start_date) &
+            (df_filtered['dt.ins.'].dt.date <= end_date)
         ]
 
     # --- Key Metrics ---
