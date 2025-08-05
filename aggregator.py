@@ -2,6 +2,20 @@
 import pandas as pd
 import glob
 import os
+import datetime
+import subprocess # Import subprocess
+
+def run_git_command(command, cwd):
+    """Helper function to run git commands."""
+    try:
+        result = subprocess.run(command, cwd=cwd, check=True, capture_output=True, text=True)
+        print(f"Git command output: {result.stdout.strip()}")
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Error running Git command: {e}")
+        print(f"Stdout: {e.stdout.strip()}")
+        print(f"Stderr: {e.stderr.strip()}")
+        return None
 
 def aggregate_data():
     # Otteniamo il percorso assoluto della directory in cui si trova lo script.
@@ -47,6 +61,7 @@ def aggregate_data():
 
     # Definiamo il percorso completo per il file CSV di output.
     output_csv_path = os.path.join(base_dir, "aggregated_data.csv")
+    output_csv_filename = "aggregated_data.csv" # For git add
 
     if all_dfs:
         final_df = pd.concat(all_dfs, ignore_index=True)
@@ -54,6 +69,31 @@ def aggregate_data():
         final_df.dropna(how='all', inplace=True)
         final_df.to_csv(output_csv_path, index=False)
         print(f"Dati aggregati e salvati in {output_csv_path}")
+
+        # --- Git Automation ---
+        try:
+            # Check if there are changes to commit
+            git_status_output = run_git_command(["git", "status", "--porcelain", output_csv_filename], base_dir)
+            if git_status_output and output_csv_filename in git_status_output:
+                print(f"Changes detected in {output_csv_filename}. Committing and pushing...")
+
+                # Add the file
+                run_git_command(["git", "add", output_csv_filename], base_dir)
+
+                # Commit the changes
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                commit_message = f"Automated data aggregation update - {timestamp}"
+                run_git_command(["git", "commit", "-m", commit_message], base_dir)
+
+                # Push to remote (assuming 'origin' and 'main' branch)
+                run_git_command(["git", "push", "origin", "main"], base_dir)
+                print("Git push completed.")
+            else:
+                print(f"No changes detected in {output_csv_filename}. Skipping Git commit/push.")
+
+        except Exception as e:
+            print(f"Errore durante l'automazione Git: {e}")
+
     else:
         print("Nessun file Excel trovato o nessun dato da aggregare.")
         pd.DataFrame().to_csv(output_csv_path, index=False)

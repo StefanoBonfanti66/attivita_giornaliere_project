@@ -23,10 +23,10 @@ venv_report_app/
 Thumbs.db
 
 # Aggregated data
-aggregated_data.csv
+# aggregated_data.csv
 
 # Excel files (original data)
-# OpzioniEsportazione*.xlsx
+OpzioniEsportazione*.xlsx
 
 # Log files
 *.log
