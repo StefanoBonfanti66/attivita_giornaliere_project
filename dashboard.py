@@ -47,18 +47,18 @@ if not df.empty:
     st.success(f"Dati caricati con successo dal file: {uploaded_file.name}")
 
     # --- Data Processing for Dashboard ---
-    # Assuming 'Report_Sheet' contains 'Inseritore_Categoria' (e.g., 'Alessandra_Contatto Cliente')
     df['Inseritore'] = df['Report_Sheet'].apply(lambda x: x.split('_')[0] if '_' in x else 'Sconosciuto')
     df['Categoria'] = df['Report_Sheet'].apply(lambda x: x.split('_')[1] if '_' in x else 'Sconosciuto')
 
-    # Convert 'dt.ins.' to datetime
+    # Convert 'dt.ins.' to datetime, assuming Italian format (DD/MM/YYYY)
     if 'dt.ins.' in df.columns:
-        df['dt.ins.'] = pd.to_datetime(df['dt.ins.'], errors='coerce')
+        df['dt.ins.'] = pd.to_datetime(df['dt.ins.'], errors='coerce', dayfirst=True)
+        df.dropna(subset=['dt.ins.'], inplace=True) # Remove rows where date conversion failed
 
-    # --- Filters ---
+    # --- Sidebar Filters ---
     st.sidebar.header("Filtri")
 
-    # Inseritore filter
+    # Inseritore Filter
     all_inseritori = sorted(df['Inseritore'].unique())
     selected_inseritore = st.sidebar.multiselect(
         "Seleziona Inseritore:",
@@ -66,47 +66,41 @@ if not df.empty:
         default=all_inseritori
     )
 
-    # Date range filter
+    # Date Range Filter
     st.sidebar.subheader("Filtro per Data")
     
-    # Ensure 'dt.ins.' is datetime and handle NaT values
-    if 'dt.ins.' in df.columns:
-        df['dt.ins.'] = pd.to_datetime(df['dt.ins.'], errors='coerce')
-        min_date = df['dt.ins.'].min()
-        max_date = df['dt.ins.'].max()
-
-        if pd.isna(min_date) or pd.isna(max_date):
-            st.sidebar.warning("La colonna delle date ('dt.ins.') contiene valori non validi.")
-            start_date = end_date = datetime.date.today()
-        else:
-            start_date = st.sidebar.date_input("Data di Inizio", value=min_date.date(), min_value=min_date.date(), max_value=max_date.date())
-            end_date = st.sidebar.date_input("Data di Fine", value=max_date.date(), min_value=start_date, max_value=max_date.date())
+    date_filter_possible = 'dt.ins.' in df.columns and not df.empty and not df['dt.ins.'].isnull().all()
+    
+    if date_filter_possible:
+        min_date = df['dt.ins.'].min().date()
+        max_date = df['dt.ins.'].max().date()
+        
+        start_date = st.sidebar.date_input("Data di Inizio", value=min_date, min_value=min_date, max_value=max_date)
+        end_date = st.sidebar.date_input("Data di Fine", value=max_date, min_value=start_date, max_value=max_date)
     else:
-        st.sidebar.warning("Colonna 'dt.ins.' non trovata. Impossibile filtrare per data.")
-        start_date = end_date = datetime.date.today()
+        st.sidebar.warning("Colonna 'dt.ins.' non trovata o vuota. Impossibile filtrare per data.")
+        start_date = None
+        end_date = None
 
-    # Apply filters
-    df_filtered = df.copy() # Start with a copy of the original dataframe
+    # --- Apply Filters ---
+    df_filtered = df.copy()
 
-    # Apply inseritore filter
+    # Apply Inseritore filter
     if selected_inseritore:
         df_filtered = df_filtered[df_filtered['Inseritore'].isin(selected_inseritore)]
 
-    # Apply date filter
-    if 'dt.ins.' in df.columns and not df_filtered.empty:
-        # Convert start_date and end_date to datetime objects for comparison
+    # Apply Date filter
+    if date_filter_possible and start_date and end_date:
         start_datetime = pd.to_datetime(start_date)
         end_datetime = pd.to_datetime(end_date)
-        
-        # Filter the dataframe
         df_filtered = df_filtered[
-            (df_filtered['dt.ins.'].dt.normalize() >= start_datetime) & 
+            (df_filtered['dt.ins.'].dt.normalize() >= start_datetime) &
             (df_filtered['dt.ins.'].dt.normalize() <= end_datetime)
         ]
 
     # --- Key Metrics ---
     st.header("Riepilogo Generale")
-    total_activities = len(df_filtered) # Use the filtered dataframe length
+    total_activities = len(df_filtered)
     st.metric("Numero Totale di Attività", total_activities)
 
 
