@@ -55,33 +55,60 @@ if not df.empty:
     if 'dt.ins.' in df.columns:
         df['dt.ins.'] = pd.to_datetime(df['dt.ins.'], errors='coerce')
 
-    # --- Key Metrics ---
-    st.header("Riepilogo Generale")
-    total_activities = len(df)
-    st.metric("Numero Totale di Attività", total_activities)
-
     # --- Filters ---
     st.sidebar.header("Filtri")
 
-    # Date Range Selector
-    st.sidebar.subheader("Filtro per Data")
-    min_date = df['dt.ins.'].min().date() if not df.empty and 'dt.ins.' in df.columns and not pd.isna(df['dt.ins.'].min()) else datetime.date.today()
-    max_date = df['dt.ins.'].max().date() if not df.empty and 'dt.ins.' in df.columns and not pd.isna(df['dt.ins.'].max()) else datetime.date.today()
-
-    start_date = st.sidebar.date_input("Data di Inizio", min_value=min_date, max_value=max_date, value=min_date)
-    end_date = st.sidebar.date_input("Data di Fine", min_value=min_date, max_value=max_date, value=max_date)
-
-    # Filter by date range
-    df_filtered_by_date = df[(df['dt.ins.'].dt.date >= start_date) & (df['dt.ins.'].dt.date <= end_date)] if 'dt.ins.' in df.columns else df
-
-
+    # Inseritore filter
+    all_inseritori = sorted(df['Inseritore'].unique())
     selected_inseritore = st.sidebar.multiselect(
         "Seleziona Inseritore:",
-        options=df_filtered_by_date['Inseritore'].unique(),
-        default=df_filtered_by_date['Inseritore'].unique()
+        options=all_inseritori,
+        default=all_inseritori
     )
 
-    df_filtered = df_filtered_by_date[df_filtered_by_date['Inseritore'].isin(selected_inseritore)]
+    # Date range filter
+    st.sidebar.subheader("Filtro per Data")
+    
+    # Ensure 'dt.ins.' is datetime and handle NaT values
+    if 'dt.ins.' in df.columns:
+        df['dt.ins.'] = pd.to_datetime(df['dt.ins.'], errors='coerce')
+        min_date = df['dt.ins.'].min()
+        max_date = df['dt.ins.'].max()
+
+        if pd.isna(min_date) or pd.isna(max_date):
+            st.sidebar.warning("La colonna delle date ('dt.ins.') contiene valori non validi.")
+            start_date = end_date = datetime.date.today()
+        else:
+            start_date = st.sidebar.date_input("Data di Inizio", value=min_date.date(), min_value=min_date.date(), max_value=max_date.date())
+            end_date = st.sidebar.date_input("Data di Fine", value=max_date.date(), min_value=start_date, max_value=max_date.date())
+    else:
+        st.sidebar.warning("Colonna 'dt.ins.' non trovata. Impossibile filtrare per data.")
+        start_date = end_date = datetime.date.today()
+
+    # Apply filters
+    df_filtered = df.copy() # Start with a copy of the original dataframe
+
+    # Apply inseritore filter
+    if selected_inseritore:
+        df_filtered = df_filtered[df_filtered['Inseritore'].isin(selected_inseritore)]
+
+    # Apply date filter
+    if 'dt.ins.' in df.columns and not df_filtered.empty:
+        # Convert start_date and end_date to datetime objects for comparison
+        start_datetime = pd.to_datetime(start_date)
+        end_datetime = pd.to_datetime(end_date)
+        
+        # Filter the dataframe
+        df_filtered = df_filtered[
+            (df_filtered['dt.ins.'].dt.normalize() >= start_datetime) & 
+            (df_filtered['dt.ins.'].dt.normalize() <= end_datetime)
+        ]
+
+    # --- Key Metrics ---
+    st.header("Riepilogo Generale")
+    total_activities = len(df_filtered) # Use the filtered dataframe length
+    st.metric("Numero Totale di Attività", total_activities)
+
 
     if df_filtered.empty:
         st.warning("Nessun dato disponibile per i filtri selezionati.")
