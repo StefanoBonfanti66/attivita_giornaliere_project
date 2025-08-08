@@ -1,4 +1,4 @@
-# Attività Giornaliere Project
+# Attività Giornaliere Project by Stefano Bonfanti
 
 Questo progetto fornisce una dashboard web per visualizzare e filtrare le attività giornaliere degli operatori, aggregando dati da file Excel.
 

@@ -6,7 +6,7 @@ import datetime
 
 # --- Configuration ---
 st.set_page_config(
-    page_title="Report Attività Giornaliere",
+    page_title="Report Attività Giornaliere Vetronaviglio",
     page_icon="📊",
     layout="wide"
 )
