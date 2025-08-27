@@ -80,11 +80,12 @@ def aggregate_data():
             print(f"Adding {output_csv_filename} to Git staging area.")
             run_git_command(["git", "add", output_csv_filename], base_dir)
 
-            # Check if there are actual changes to commit
-            # git diff --cached --quiet exits with 0 if no changes, 1 if changes
-            stdout_diff, returncode_diff = run_git_command(["git", "diff", "--cached", "--quiet", output_csv_filename], base_dir, check_exit_code=False)
+            # Check if aggregated_data.csv is modified (M) or added (A) in git status --porcelain
+            stdout_status, returncode_status = run_git_command(["git", "status", "--porcelain", output_csv_filename], base_dir)
 
-            if returncode_diff == 1: # returncode 1 means there ARE differences
+            # Check if the output contains 'M ' (modified) or 'A ' (added) for the file
+            # The space after M/A is important to match the status output format
+            if f"M {output_csv_filename}" in stdout_status or f"A {output_csv_filename}" in stdout_status:
                 print(f"Changes detected in {output_csv_filename}. Committing and pushing...")
 
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
