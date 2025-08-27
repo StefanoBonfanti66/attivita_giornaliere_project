@@ -5,10 +5,10 @@ import datetime
 import subprocess
 import time
 
-def run_git_command(command, cwd, check_exit_code=True):
+def run_git_command(command, cwd, check_exit_code=True, input=None):
     """Helper function to run git commands."""
     try:
-        result = subprocess.run(command, cwd=cwd, check=check_exit_code, capture_output=True, text=True)
+        result = subprocess.run(command, cwd=cwd, check=check_exit_code, capture_output=True, text=True, input=input)
         print(f"Git command output: {result.stdout.strip()}")
         return result.stdout, result.returncode
     except subprocess.CalledProcessError as e:
@@ -88,7 +88,7 @@ def aggregate_data():
 
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 commit_message = f"Automated data aggregation update - {timestamp}"
-                run_git_command(["git", "commit", "-m", commit_message], base_dir)
+                run_git_command(["git", "commit", "-F", "-"], base_dir, input=commit_message)
 
                 run_git_command(["git", "push", "origin", "main"], base_dir)
                 print("Git push completed.")
