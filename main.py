@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from fastapi import FastAPI, APIRouter
 from fastapi.staticfiles import StaticFiles
-import aggregator
+# import aggregator # No longer needed if not calling aggregate_data()
 
 # --- App Principale ---
 app = FastAPI()
@@ -11,7 +11,7 @@ app = FastAPI()
 # --- Aggregazione Dati all'Avvio ---
 # Eseguiamo l'aggregazione dei dati all'avvio del server.
 # Questo assicura che i dati siano sempre aggiornati al deploy.
-aggregator.aggregate_data()
+# REMOVED: aggregator.aggregate_data()
 
 # --- API Router ---
 # Definiamo le rotte per i dati in un router separato per pulizia.
