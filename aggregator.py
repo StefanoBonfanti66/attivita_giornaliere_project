@@ -83,6 +83,10 @@ def aggregate_data():
             # Check if aggregated_data.csv is modified (M) or added (A) in git status --porcelain
             stdout_status, returncode_status = run_git_command(["git", "status", "--porcelain", output_csv_filename], base_dir)
 
+            print(f"DEBUG: stdout_status = '{stdout_status}'")
+            print(f"DEBUG: Checking for 'M {output_csv_filename}' = 'M {output_csv_filename}'")
+            print(f"DEBUG: Checking for 'A {output_csv_filename}' = 'A {output_csv_filename}'")
+
             # Check if the output contains 'M ' (modified) or 'A ' (added) for the file
             # The space after M/A is important to match the status output format
             if f"M {output_csv_filename}" in stdout_status or f"A {output_csv_filename}" in stdout_status:
