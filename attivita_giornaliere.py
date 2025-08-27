@@ -12,8 +12,8 @@ from PIL import Image
 from aggregator import aggregate_data
 
 # Percorsi delle immagini dei pulsanti OK dei popup
-OK_BUTTON_IMAGE_PATH_1 = r'C:\Users\s.bonfanti\Lavori stefano\automations\attivita_giornaliere_project\ok_button.png'
-LOGO_PATH = r'C:\Users\s.bonfanti\Lavori stefano\automations\attivita_giornaliere_project\logo.png'
+OK_BUTTON_IMAGE_PATH_1 = r'C:\progetti_stefano\automations\attivita_giornaliere_project\ok_button.png'
+LOGO_PATH = r'C:\progetti_stefano\automations\attivita_giornaliere_project\logo.png'
 
 def handle_popup(image_paths):
     """Cerca i pulsanti OK dei popup e li clicca se presenti."""
