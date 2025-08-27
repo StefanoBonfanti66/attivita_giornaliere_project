@@ -80,10 +80,11 @@ def aggregate_data():
             print(f"Adding {output_csv_filename} to Git staging area.")
             run_git_command(["git", "add", output_csv_filename], base_dir)
 
-            # Check if the file is now in the staging area
-            stdout_ls_files, returncode_ls_files = run_git_command(["git", "ls-files", "--stage", output_csv_filename], base_dir, check_exit_code=False)
+            # Check if there are actual changes to commit
+            # git diff --cached --quiet exits with 0 if no changes, 1 if changes
+            stdout_diff, returncode_diff = run_git_command(["git", "diff", "--cached", "--quiet", output_csv_filename], base_dir, check_exit_code=False)
 
-            if returncode_ls_files == 0 and output_csv_filename in stdout_ls_files:
+            if returncode_diff == 1: # returncode 1 means there ARE differences
                 print(f"Changes detected in {output_csv_filename}. Committing and pushing...")
 
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
