@@ -94,7 +94,7 @@ def aggregate_data():
 
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             commit_message = f"Automated data aggregation update - {timestamp}"
-            run_git_command(["git", "commit", "-F", "-"], base_dir, input=commit_message)
+            run_git_command(["git", "commit", "--allow-empty", "-F", "-"], base_dir, input=commit_message)
 
             run_git_command(["git", "push", "origin", "main"], base_dir)
             print("Git push completed.")
