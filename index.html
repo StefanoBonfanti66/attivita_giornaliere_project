@@ -153,9 +153,11 @@
                 return;
             }
 
-            const headers = Object.keys(data[0]);
+            // Define the desired column order
+            const desiredOrder = ["Dt. ins.", "Soggetto", "Ragione sociale", "Contatto", "Note interne 1", "Operatore", "Categoria"];
+
             const headerRow = document.createElement('tr');
-            headers.forEach(header => {
+            desiredOrder.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header;
                 headerRow.appendChild(th);
@@ -164,9 +166,10 @@
 
             data.forEach(row => {
                 const tr = document.createElement('tr');
-                headers.forEach(header => {
+                desiredOrder.forEach(header => {
                     const td = document.createElement('td');
-                    td.textContent = row[header];
+                    // Handle potential missing data for a column
+                    td.textContent = row[header] !== undefined ? row[header] : '';
                     tr.appendChild(td);
                 });
                 tbody.appendChild(tr);
