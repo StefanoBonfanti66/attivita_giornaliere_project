@@ -26,31 +26,29 @@ def aggregate_data():
 
     for file in excel_files:
         try:
-            df_raw = pd.read_excel(file, header=None)
-
-            operator_name = "Sconosciuto"
-            if df_raw.shape[0] > 1:
-                raw_name = df_raw.iloc[1, 0]
-                if pd.notna(raw_name):
-                    operator_name = str(raw_name).split('-')[0].strip()
-
-            header_row_index = -1
-            for i, row in df_raw.iterrows():
-                if row.count() > 2:
-                    header_row_index = i
-                    break
+            # Read all sheets from the Excel file
+            xls = pd.ExcelFile(file)
             
-            if header_row_index == -1:
-                print(f"Nessuna riga di intestazione trovata in {file}")
-                continue
+            for sheet_name in xls.sheet_names:
+                # Skip sheets that are not the processed data (e.g., original "Foglio1" or "Sheet1")
+                # Assuming processed sheets have an underscore, like "Operatore_Categoria"
+                if "_" not in sheet_name:
+                    continue
 
-            df_data = df_raw.iloc[header_row_index:].copy()
-            df_data.columns = df_data.iloc[0]
-            df_data = df_data[1:]
-            df_data.reset_index(drop=True, inplace=True)
-            df_data['Operatore'] = operator_name
-            
-            all_dfs.append(df_data)
+                df_sheet = pd.read_excel(xls, sheet_name=sheet_name, skiprows=2) # Skip logo and title rows
+                
+                # Extract Operatore and Categoria from sheet_name
+                parts = sheet_name.split('_')
+                if len(parts) >= 2:
+                    operator_name = parts[0]
+                    category = parts[1]
+                    df_sheet['Operatore'] = operator_name
+                    df_sheet['Categoria'] = category # Add Categoria column
+                else:
+                    df_sheet['Operatore'] = "Sconosciuto"
+                    df_sheet['Categoria'] = "Sconosciuto"
+
+                all_dfs.append(df_sheet)
 
         except Exception as e:
             print(f"Errore durante l'elaborazione del file {file}: {e}")
