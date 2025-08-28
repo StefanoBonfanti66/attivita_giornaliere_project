@@ -89,23 +89,15 @@ def aggregate_data():
             # Strip any leading/trailing whitespace, including newlines
             stdout_status = stdout_status.strip()
 
-            print(f"DEBUG: stdout_status (stripped) = '{stdout_status}'")
-            print(f"DEBUG: Checking for 'M {output_csv_filename}' = 'M {output_csv_filename}'")
-            print(f"DEBUG: Checking for 'A {output_csv_filename}' = 'A {output_csv_filename}'")
+            # Always attempt to commit and push if we reached this point
+            print(f"Attempting to commit and push changes for {output_csv_filename}...")
 
-            # Check if the output contains 'M ' (modified) or 'A ' (added) for the file
-            # The space after M/A is important to match the status output format
-            if f"M {output_csv_filename}" in stdout_status or f"A {output_csv_filename}" in stdout_status:
-                print(f"Changes detected in {output_csv_filename}. Committing and pushing...")
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            commit_message = f"Automated data aggregation update - {timestamp}"
+            run_git_command(["git", "commit", "-F", "-"], base_dir, input=commit_message)
 
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                commit_message = f"Automated data aggregation update - {timestamp}"
-                run_git_command(["git", "commit", "-F", "-"], base_dir, input=commit_message)
-
-                run_git_command(["git", "push", "origin", "main"], base_dir)
-                print("Git push completed.")
-            else:
-                print(f"No changes detected in {output_csv_filename} after staging. Skipping Git commit/push.")
+            run_git_command(["git", "push", "origin", "main"], base_dir)
+            print("Git push completed.")
 
         except Exception as e:
             print(f"Errore durante l'automazione Git: {e}")
