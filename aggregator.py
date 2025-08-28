@@ -62,6 +62,7 @@ def aggregate_data():
         final_df.dropna(how='all', inplace=True)
         final_df.to_csv(output_csv_path, index=False)
         print(f"Dati aggregati e salvati in {output_csv_path}")
+        print(f"DEBUG: Size of saved CSV: {os.path.getsize(output_csv_path)} bytes")
 
         time.sleep(1)
 
@@ -75,8 +76,12 @@ def aggregate_data():
             run_git_command(["git", "rm", "--cached", output_csv_filename], base_dir, check_exit_code=False)
 
             # Add the file to staging area
-            print(f"Adding {output_csv_filename} to Git staging area.")
+            print(f"DEBUG: Attempting to add {output_csv_filename} to Git staging area.")
             run_git_command(["git", "add", output_csv_filename], base_dir)
+
+            # Check what Git has staged for this file
+            stdout_ls_files_staged, returncode_ls_files_staged = run_git_command(["git", "ls-files", "--stage", output_csv_filename], base_dir)
+            print(f"DEBUG: git ls-files --stage output: '{stdout_ls_files_staged.strip()}'")
 
             # Check if aggregated_data.csv is modified (M) or added (A) in git status --porcelain
             stdout_status, returncode_status = run_git_command(["git", "status", "--porcelain", output_csv_filename], base_dir)
