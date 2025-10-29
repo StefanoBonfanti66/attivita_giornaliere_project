@@ -8,6 +8,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image as OpenpyxlImage # Import per inserire immagini
 import os
 import traceback
+import argparse
 from PIL import Image
 from aggregator import aggregate_data
 
@@ -167,6 +168,14 @@ def process_excel_file(input_file_path, start_date, end_date):
         traceback.print_exc()
 
 def run():
+    # Aggiungi argomenti CLI per configurare l'email
+    parser = argparse.ArgumentParser(description="Genera il report attività e opzionalmente prepara una bozza email.")
+    parser.add_argument("--email", action="store_true", help="Se passato, apre una bozza Outlook con il file generato.")
+    parser.add_argument("--email-to", nargs="*", help="Lista di destinatari per la bozza Outlook")
+    parser.add_argument("--email-subject", help="Oggetto per la bozza Outlook (default: Report [data])")
+    parser.add_argument("--email-body", help="Corpo del messaggio per la bozza Outlook")
+    args = parser.parse_args()
+
     analysis_choice = input("Per quale data vuoi analizzare i dati? (digita 'oggi', 'settimana corrente' o una data specifica): ").lower()
 
     start_date = None
@@ -241,6 +250,39 @@ def run():
                 print("Avvio aggregazione dati...")
                 aggregate_data()
                 print("Script completato con successo.")
+                
+                # Se richiesto, prepara la bozza email con il file appena generato
+                if args.email:
+                    try:
+                        from outlook_email import create_outlook_draft
+                        
+                        # Usa il file Excel appena generato
+                        if os.path.exists(full_path):
+                            # Prepara oggetto email in base al periodo analizzato
+                            subject = args.email_subject
+                            if not subject:
+                                if start_date == end_date:
+                                    subject = f"Report attività del {start_date.strftime('%d/%m/%Y')}"
+                                else:
+                                    subject = f"Report attività dal {start_date.strftime('%d/%m/%Y')} al {end_date.strftime('%d/%m/%Y')}"
+
+                            # Prepara corpo email
+                            body = args.email_body
+                            if not body:
+                                if start_date == end_date:
+                                    body = f"In allegato il report delle attività del {start_date.strftime('%d/%m/%Y')}."
+                                else:
+                                    body = f"In allegato il report delle attività dal {start_date.strftime('%d/%m/%Y')} al {end_date.strftime('%d/%m/%Y')}."
+                            
+                            print("Preparo bozza email con il report...")
+                            create_outlook_draft(full_path, subject=subject, body=body, to=args.email_to, display=True)
+                            print("Bozza email creata con successo.")
+                        else:
+                            print("File Excel non trovato per la bozza email.")
+                    except Exception as e:
+                        print("Errore durante la creazione della bozza email:", e)
+                        traceback.print_exc()
+
                 return
             except (PermissionError, OSError) as e:
                 print(f"File temporaneamente bloccato: {e}. Riprovo...")

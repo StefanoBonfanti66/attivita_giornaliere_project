@@ -56,6 +56,14 @@ Il flusso di aggiornamento dei dati e il funzionamento generale del progetto son
     *   `aggregator.py` legge tutti i fogli elaborati dai file `OpzioniEsportazione*.xlsx`, aggrega i dati in un singolo `aggregated_data.csv` e include correttamente le colonne `Operatore` e `Categoria` estratte dai nomi dei fogli.
     *   Lo script `aggregator.py` è ora più robusto e gestisce automaticamente il commit e il push di `aggregated_data.csv` su GitHub, anche se Git non rileva differenze di contenuto (forzando un commit vuoto se necessario).
 
+    Nota utile: se vuoi che venga creata automaticamente una bozza di email Outlook con il file `aggregated_data.csv` allegato (solo su Windows con Outlook e `pywin32`), puoi eseguire `aggregator.py` con l'opzione `--email`. Esempio:
+
+    ```bash
+    python aggregator.py --email --email-to stefano@example.com --email-subject "Report giornaliero"
+    ```
+
+    Questo aprirà una bozza di Outlook allegando `aggregated_data.csv` (o stamperà un messaggio descrittivo se Outlook/pywin32 non sono disponibili).
+
 3.  **Deploy Automatico su Render.com:**
     *   Ogni volta che `aggregated_data.csv` viene pushato su GitHub, Render rileva le modifiche e avvia un nuovo processo di deploy.
     *   **Importante:** La dashboard su Render ora serve direttamente il file `aggregated_data.csv` presente nel repository, senza tentare di ri-eseguire l'aggregazione all'avvio del server (questo previene la sovrascrittura del file con dati vuoti).
@@ -82,3 +90,52 @@ La dashboard web è stata significativamente migliorata:
     git config --global --add safe.directory C:/progetti_stefano/automations/attivita_giornaliere_project
     ```
 *   **Immagini non visualizzate:** Assicurati che i file immagine (`logo.png`, `operatrice.png`) siano presenti nella directory radice del progetto e siano stati aggiunti e committati su GitHub.
+
+    ## Preparare una email in Outlook (Windows)
+
+    Se vuoi preparare rapidamente una bozza di email in Outlook con il file generato (es. `aggregated_data.csv`), ho aggiunto uno script utility `outlook_email.py` che crea una bozza e allega il file.
+
+    Prerequisiti:
+
+    * Windows + Outlook installato
+    * `pywin32` (aggiunto a `requirements.txt`)
+
+    Esempi:
+
+    Aprire una bozza con allegato:
+
+    ```bash
+    python outlook_email.py --file aggregated_data.csv --subject "Report giornaliero" --body "In allegato il report." --to stefano@example.com
+    ```
+
+    Inviare direttamente (attenzione: invia l'email):
+
+    ```bash
+    python outlook_email.py --file aggregated_data.csv --subject "Report giornaliero" --body "In allegato il report." --to stefano@example.com --send
+    ```
+
+    Se non hai `pywin32` installalo con:
+
+    ```bash
+    pip install pywin32
+    ```
+
+    Nota: lo script mostra un messaggio d'errore utile se pywin32/Outlook non sono disponibili.
+
+### Troubleshooting: errore COM / "Esecuzione del server non riuscito"
+
+Se, come nel tuo output, vedi un errore tipo:
+
+```
+Impossibile creare la bozza Outlook: (-2146959355, 'Esecuzione del server non riuscito.', None, None)
+```
+
+Prova i seguenti passaggi:
+
+1. Assicurati che Outlook sia installato e aperto con lo stesso utente con cui esegui lo script.
+2. Avvia Outlook manualmente (apri l'app) e rilancia lo script; spesso il problema è che il server COM non è pronto.
+3. Verifica che `pywin32` sia installato nel tuo ambiente Python (esegui `pip show pywin32`).
+4. Evita di eseguire lo script come utente diverso (ad es. amministratore) rispetto a Outlook — i COM server possono rifiutare l'esecuzione tra utenti/elevazioni diverse.
+5. Se il problema persiste, prova ad aggiornare lo script `outlook_email.py` (già incluso) che tenta più strategie: EnsureDispatch, DispatchEx e lancia Outlook se necessario. Se anche così fallisce, copia qui l'errore completo e lo esamino.
+
+Questi consigli risolvono la maggior parte dei casi.
