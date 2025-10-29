@@ -93,11 +93,48 @@ La dashboard web è stata significativamente migliorata:
 
     ## Preparare una email in Outlook (Windows)
 
-    Se vuoi preparare rapidamente una bozza di email in Outlook con il file generato (es. `aggregated_data.csv`), ho aggiunto uno script utility `outlook_email.py` che crea una bozza e allega il file.
+    Ci sono due modi per preparare una bozza email con i report generati:
 
-    Prerequisiti:
+    ### 1. Durante la generazione del report (`attivita_giornaliere.py`)
 
-    * Windows + Outlook installato
+    Quando esegui lo script `attivita_giornaliere.py`, puoi usare le seguenti opzioni per preparare automaticamente una bozza email:
+
+    ```bash
+    # Genera il report e prepara una bozza email
+    python attivita_giornaliere.py --email
+
+    # Specifica i destinatari
+    python attivita_giornaliere.py --email --email-to mario.rossi@azienda.com anna.verdi@azienda.com
+
+    # Personalizza oggetto e testo
+    python attivita_giornaliere.py --email --email-subject "Report settimanale" --email-body "In allegato il report delle attività."
+    ```
+
+    Lo script:
+    - Genera il report Excel come al solito
+    - Prepara una bozza in Outlook con il file allegato
+    - Usa un oggetto predefinito basato sul periodo (es. "Report attività del 29/10/2025")
+    - Mostra la bozza per permettere di rivederla prima dell'invio
+
+    ### 2. Dopo l'aggregazione dei dati (`aggregator.py`)
+
+    Se vuoi preparare una bozza email con il file aggregato `aggregated_data.csv`, usa:
+
+    ```bash
+    python aggregator.py --email --email-to stefano@example.com --email-subject "Report giornaliero"
+    ```
+
+    ### Prerequisiti per le funzionalità email:
+
+    * Windows con Outlook installato
+    * Pacchetto `pywin32` (incluso in requirements.txt)
+
+    ### Risoluzione problemi email
+
+    Se incontri problemi con Outlook:
+    * Assicurati che Outlook sia installato e configurato
+    * Prova a riavviare Outlook se rimane bloccato
+    * Verifica che non ci siano finestre di dialogo di Outlook aperte
     * `pywin32` (aggiunto a `requirements.txt`)
 
     Esempi:
